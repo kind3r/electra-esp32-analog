@@ -1,0 +1,5 @@
+{
+  "ssid": "your wifi ssid",
+  "pass": "your wifi password",
+  "ha": "wss://your_ha_server:port/api/websocket"
+}
