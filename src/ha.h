@@ -31,7 +31,7 @@ private:
   static std::string statusEntity;
   static void setupEntity();
   static void setupStatusEntity();
-  static void updateState();
+  static void updateState(const char *lockState = "LOCK", bool lockRinging = true);
 };
 
 

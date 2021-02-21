@@ -1,7 +1,7 @@
 #include "ha.h"
 
 static const char *TAG = "HomeAssistant";
-static const char *LWTMessage = "{\"status\":\"LOCK\",\"ringing\":false}";
+static const char *LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false}";
 
 uint8_t *HA::buffer = NULL;
 esp_event_handler_instance_t HA::instance_lost_ip;
@@ -92,6 +92,8 @@ void HA::ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_
 void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
   esp_mqtt_event_handle_t event = (esp_mqtt_event_handle_t)event_data;
+  char *topic;
+  char *data;
   switch (event->event_id)
   {
   case MQTT_EVENT_CONNECTED:
@@ -100,6 +102,8 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
     // if config was done so we don't waste the time
     setupEntity();
     setupStatusEntity();
+
+    esp_mqtt_client_subscribe(mqtt, commandTopic.c_str(), 1);
 
     updateState();
     break;
@@ -118,8 +122,20 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
     break;
   case MQTT_EVENT_DATA:
     ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-    printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-    printf("DATA=%.*s\r\n", event->data_len, event->data);
+    topic = new char[event->topic_len + 1];
+    memcpy(topic, event->topic, event->topic_len);
+    topic[event->topic_len] = '\0';
+    if (strcmp(topic, commandTopic.c_str()) == 0)
+    {
+      data = new char[event->data_len + 1];
+      memcpy(data, event->data, event->data_len);
+      data[event->data_len] = '\0';
+      if (strcmp(data, "UNLOCK") == 0)
+      {
+        ESP_LOGI(TAG, "Performing UNLOCK");
+        updateState("UNLOCK", false);
+      }
+    }
     break;
   case MQTT_EVENT_ERROR:
     ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -238,12 +254,12 @@ void HA::setupStatusEntity()
   cJSON_Delete(status);
 }
 
-void HA::updateState()
+void HA::updateState(const char *lockState, bool lockRinging)
 {
   cJSON *state = cJSON_CreateObject();
-  cJSON *status = cJSON_CreateString("LOCK");
-  cJSON_AddItemToObject(state, "status", status);
-  cJSON *ringing = cJSON_CreateBool(true);
+  cJSON *status = cJSON_CreateString(lockState);
+  cJSON_AddItemToObject(state, "state", status);
+  cJSON *ringing = cJSON_CreateBool(lockRinging);
   cJSON_AddItemToObject(state, "ringing", ringing);
 
   cJSON_PrintPreallocated(state, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
