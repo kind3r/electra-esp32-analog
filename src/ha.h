@@ -3,6 +3,7 @@
 
 #define ELECTRA_ESP_HA_BUFFER_SIZE 4096
 
+#include <string>
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_event.h>
@@ -23,7 +24,14 @@ private:
   static esp_mqtt_client_config_t *mqttConfig;
   static esp_mqtt_client_handle_t mqtt;
   static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
-
+  static std::string configTopic;
+  static std::string configStatusTopic;
+  static std::string stateTopic;
+  static std::string commandTopic;
+  static std::string statusEntity;
+  static void setupEntity();
+  static void setupStatusEntity();
+  static void updateState();
 };
 
 

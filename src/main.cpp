@@ -28,7 +28,8 @@ void app_main()
     {
     }
   }
-  else if (HA::init() != ESP_OK) {
+  else if (HA::init() != ESP_OK)
+  {
     ESP_LOGE("main", "Error during HA init");
     // panic ?
     for (;;)
@@ -43,4 +44,6 @@ void app_main()
     {
     }
   }
+
+  meminfo();
 }

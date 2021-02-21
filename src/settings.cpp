@@ -8,6 +8,7 @@ char *Settings::pass = NULL;
 char *Settings::mqttUrl = NULL;
 char *Settings::mqttUser = NULL;
 char *Settings::mqttPass = NULL;
+char *Settings::entity = NULL;
 
 esp_err_t Settings::init()
 {
@@ -56,6 +57,11 @@ char *Settings::getMqttUser()
 char *Settings::getMqttPass()
 {
   return mqttPass;
+}
+
+char *Settings::getEntity()
+{
+  return entity;
 }
 
 esp_err_t Settings::initSPIFFS()
@@ -151,6 +157,12 @@ esp_err_t Settings::readConfig(uint8_t *buffer, size_t bufferLen)
     if (getConfigVar(root, "mqttPass", mqttPass) != ESP_OK)
     {
       ESP_LOGE(TAG, "Config file missing 'mqttPass'");
+      return ESP_FAIL;
+    }
+    // get ha entity
+    if (getConfigVar(root, "entity", entity) != ESP_OK)
+    {
+      ESP_LOGE(TAG, "Config file missing 'entity'");
       return ESP_FAIL;
     }
 

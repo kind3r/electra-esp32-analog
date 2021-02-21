@@ -9,6 +9,7 @@
 #define ELECTRA_ESP_CONFIG_BUFFER_SIZE 3072
 #endif
 
+#include <string>
 #include <string.h>
 #include <stdio.h>
 #include <cJSON.h>
@@ -25,6 +26,7 @@ public:
   static char *getMqttUrl();
   static char *getMqttUser();
   static char *getMqttPass();
+  static char *getEntity();
 
 private:
   static bool ready;
@@ -33,6 +35,7 @@ private:
   static char *mqttUrl;
   static char *mqttUser;
   static char *mqttPass;
+  static char *entity;
 
   static esp_err_t initSPIFFS();
   static esp_err_t readConfig(uint8_t *buffer, size_t bufferLen);
