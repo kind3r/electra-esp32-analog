@@ -22,16 +22,21 @@ public:
   static esp_err_t init();
   static char *getSsid();
   static char *getPass();
-  static char *getHa();
+  static char *getMqttUrl();
+  static char *getMqttUser();
+  static char *getMqttPass();
 
 private:
   static bool ready;
   static char *ssid;
   static char *pass;
-  static char *ha;
+  static char *mqttUrl;
+  static char *mqttUser;
+  static char *mqttPass;
 
   static esp_err_t initSPIFFS();
   static esp_err_t readConfig(uint8_t *buffer, size_t bufferLen);
+  static esp_err_t getConfigVar(cJSON *root, const char *name, char *&var);
 };
 
 #endif

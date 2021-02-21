@@ -5,7 +5,9 @@ static const char *TAG = "Settings";
 bool Settings::ready = false;
 char *Settings::ssid = NULL;
 char *Settings::pass = NULL;
-char *Settings::ha = NULL;
+char *Settings::mqttUrl = NULL;
+char *Settings::mqttUser = NULL;
+char *Settings::mqttPass = NULL;
 
 esp_err_t Settings::init()
 {
@@ -41,9 +43,19 @@ char *Settings::getPass()
   return pass;
 }
 
-char *Settings::getHa()
+char *Settings::getMqttUrl()
 {
-  return ha;
+  return mqttUrl;
+}
+
+char *Settings::getMqttUser()
+{
+  return mqttUser;
+}
+
+char *Settings::getMqttPass()
+{
+  return mqttPass;
 }
 
 esp_err_t Settings::initSPIFFS()
@@ -109,54 +121,44 @@ esp_err_t Settings::readConfig(uint8_t *buffer, size_t bufferLen)
 
   if (fileLen > 0)
   {
-    size_t objLen = 0;
-    cJSON *objJSON = nullptr;
+    ESP_LOGV(TAG, "Reading settings file");
     cJSON *root = cJSON_Parse((char *)buffer);
     // get wifi ssid
-    if (cJSON_HasObjectItem(root, "ssid"))
-    {
-      objJSON = cJSON_GetObjectItem(root, "ssid");
-      objLen = strlen(objJSON->valuestring);
-      ssid = new char[objLen + 1];
-      memcpy(ssid, objJSON->valuestring, objLen);
-      ssid[objLen] = '\0';
-    }
-    else
+    if (getConfigVar(root, "ssid", ssid) != ESP_OK)
     {
       ESP_LOGE(TAG, "Config file missing 'ssid'");
       return ESP_FAIL;
     }
     // get wifi password
-    if (cJSON_HasObjectItem(root, "pass"))
-    {
-      objJSON = cJSON_GetObjectItem(root, "pass");
-      objLen = strlen(objJSON->valuestring);
-      pass = new char[objLen + 1];
-      memcpy(pass, objJSON->valuestring, objLen);
-      pass[objLen] = '\0';
-    }
-    else
+    if (getConfigVar(root, "pass", pass) != ESP_OK)
     {
       ESP_LOGE(TAG, "Config file missing 'pass'");
       return ESP_FAIL;
     }
-    // get ha websocket url
-    if (cJSON_HasObjectItem(root, "ha"))
+    // get ha mqtt url
+    if (getConfigVar(root, "mqttUrl", mqttUrl) != ESP_OK)
     {
-      objJSON = cJSON_GetObjectItem(root, "ha");
-      objLen = strlen(objJSON->valuestring);
-      ha = new char[objLen + 1];
-      memcpy(ha, objJSON->valuestring, objLen);
-      ha[objLen] = '\0';
+      ESP_LOGE(TAG, "Config file missing 'mqttUrl'");
+      return ESP_FAIL;
     }
-    else
+    // get ha mqtt username
+    if (getConfigVar(root, "mqttUser", mqttUser) != ESP_OK)
     {
-      ESP_LOGE(TAG, "Config file missing 'ha'");
+      ESP_LOGE(TAG, "Config file missing 'mqttUser'");
+      return ESP_FAIL;
+    }
+    // get ha mqtt password
+    if (getConfigVar(root, "mqttPass", mqttPass) != ESP_OK)
+    {
+      ESP_LOGE(TAG, "Config file missing 'mqttPass'");
       return ESP_FAIL;
     }
 
+    ESP_LOGV(TAG, "Read settings file completed");
+
 #if CONFIG_LOG_DEFAULT_LEVEL >= ESP_LOG_DEBUG
-    ESP_LOGD(TAG, "Read settings:\nssid: [%s]\npass: [%s]\nha: [%s]", ssid, pass, ha);
+    ESP_LOGD(TAG, "Read settings:\nssid: [%s]\npass: [%s]\nmqtt URL: [%s]\nmqtt User: [%s]\nmqtt Password: [%s]",
+             ssid, pass, mqttUrl, mqttUser, mqttPass);
 #endif
 
     return ESP_OK;
@@ -164,6 +166,23 @@ esp_err_t Settings::readConfig(uint8_t *buffer, size_t bufferLen)
   else
   {
     ESP_LOGE(TAG, "Config file is empty");
+    return ESP_FAIL;
+  }
+}
+
+esp_err_t Settings::getConfigVar(cJSON *root, const char *name, char *&var)
+{
+  if (cJSON_HasObjectItem(root, name))
+  {
+    cJSON *objJSON = cJSON_GetObjectItem(root, name);
+    size_t objLen = strlen(objJSON->valuestring);
+    var = new char[objLen + 1];
+    memcpy(var, objJSON->valuestring, objLen);
+    var[objLen] = '\0';
+    return ESP_OK;
+  }
+  else
+  {
     return ESP_FAIL;
   }
 }

@@ -3,6 +3,7 @@
 #include <esp_netif.h>
 #include <esp_event.h>
 #include "settings.h"
+#include "ha.h"
 #include "wifi.h"
 #include "util.h"
 
@@ -22,6 +23,13 @@ void app_main()
   if (Settings::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during Settings init");
+    // panic ?
+    for (;;)
+    {
+    }
+  }
+  else if (HA::init() != ESP_OK) {
+    ESP_LOGE("main", "Error during HA init");
     // panic ?
     for (;;)
     {

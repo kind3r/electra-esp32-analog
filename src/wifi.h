@@ -4,8 +4,8 @@
 #include <esp_log.h>
 #include <esp_err.h>
 #include <esp_wifi.h>
-#include "esp_event.h"
-#include "freertos/event_groups.h"
+#include <esp_event.h>
+#include <freertos/event_groups.h>
 #include "settings.h"
 
 /* The event group allows multiple bits for each event, but we only care about two events:
