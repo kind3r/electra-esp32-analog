@@ -10,6 +10,7 @@
 #include <mqtt_client.h>
 #include <cJSON.h>
 #include "settings.h"
+#include "intercom.h"
 
 class HA
 {

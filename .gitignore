@@ -33,6 +33,7 @@
 
 .pio
 .vscode
+.DS_Store
 sdkconfig.old
 
 data/config.json

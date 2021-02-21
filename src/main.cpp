@@ -6,6 +6,7 @@
 #include "ha.h"
 #include "wifi.h"
 #include "util.h"
+#include "intercom.h"
 
 extern "C"
 {
@@ -19,6 +20,8 @@ void app_main()
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   meminfo();
+
+  Intercom::init();
 
   if (Settings::init() != ESP_OK)
   {

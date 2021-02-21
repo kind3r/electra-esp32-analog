@@ -134,6 +134,7 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
       {
         ESP_LOGI(TAG, "Performing UNLOCK");
         updateState("UNLOCK", false);
+        Intercom::open();
       }
     }
     break;
