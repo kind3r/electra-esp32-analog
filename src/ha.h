@@ -24,6 +24,7 @@ private:
   static void ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
   static esp_mqtt_client_config_t *mqttConfig;
   static esp_mqtt_client_handle_t mqtt;
+  static bool unlockTaskRunning;
   static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
   static std::string configTopic;
   static std::string configStatusTopic;
@@ -33,6 +34,7 @@ private:
   static void setupEntity();
   static void setupStatusEntity();
   static void updateState(const char *lockState = "LOCK", bool lockRinging = true);
+  static void unlockTask(void *arg);
 };
 
 

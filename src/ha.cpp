@@ -8,6 +8,7 @@ esp_event_handler_instance_t HA::instance_lost_ip;
 esp_event_handler_instance_t HA::instance_got_ip;
 esp_mqtt_client_config_t *HA::mqttConfig = NULL;
 esp_mqtt_client_handle_t HA::mqtt = NULL;
+bool HA::unlockTaskRunning = false;
 
 std::string HA::configTopic;
 std::string HA::configStatusTopic;
@@ -132,10 +133,12 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
       data[event->data_len] = '\0';
       if (strcmp(data, "UNLOCK") == 0)
       {
-        ESP_LOGI(TAG, "Performing UNLOCK");
-        updateState("UNLOCK", false);
-        Intercom::open();
-        updateState("LOCK", false);
+        if (!unlockTaskRunning) {
+          unlockTaskRunning = true;
+          ESP_LOGI(TAG, "Performing UNLOCK");
+          // run unlock sequence in a separate thread so that mqtt status messages get sent to HA
+          xTaskCreate(unlockTask, "unlock_task", 2048, NULL, 10, NULL);
+        }
       }
     }
     break;
@@ -274,4 +277,12 @@ void HA::updateState(const char *lockState, bool lockRinging)
   }
 
   cJSON_Delete(state);
+}
+
+void HA::unlockTask(void *arg) {
+  updateState("UNLOCK", false);
+  Intercom::open();
+  updateState("LOCK", false);
+  unlockTaskRunning = false;
+  vTaskDelete(NULL);
 }
