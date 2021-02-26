@@ -10,7 +10,7 @@ void Intercom::init()
 {
   // setup input gpios
   gpio_config_t io_conf;
-  io_conf.intr_type = GPIO_INTR_POSEDGE;
+  io_conf.intr_type = GPIO_INTR_ANYEDGE;
   io_conf.mode = GPIO_MODE_INPUT;
   io_conf.pin_bit_mask = ((1ULL << ESP_SW_TALK) | (1ULL << ESP_SW_OPEN));
   io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
@@ -26,7 +26,7 @@ void Intercom::init()
   gpio_config(&io_conf);
 
   // run task to monitor inputs
-  gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+  gpio_evt_queue = xQueueCreate(30, sizeof(uint32_t));
   xTaskCreate(gpioTask, "gpio_task", 2048, NULL, 10, NULL);
 
   //install gpio isr service
@@ -49,6 +49,8 @@ void Intercom::open() {
   pushTalk(false);
   vTaskDelay(200 / portTICK_RATE_MS);
   pushOpen(true);
+  vTaskDelay(2000 / portTICK_RATE_MS);
+  pushOpen(false);
 }
 
 void IRAM_ATTR Intercom::gpioHandler(void *arg)
