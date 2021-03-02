@@ -3,6 +3,7 @@
 static const char *TAG = "Sleep";
 
 bool Sleep::wasAwoken = false;
+bool Sleep::started = false;
 
 void Sleep::init()
 {
@@ -17,23 +18,34 @@ void Sleep::init()
   io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
   gpio_config(&io_conf);
 
-  if(gpio_get_level(ESP_WAKEUP) == 1) {
+  if (gpio_get_level(ESP_WAKEUP) == 1)
+  {
     wasAwoken = true;
   }
-
-  xTaskCreate(gpioTask, "gpio_task", 2048, NULL, 10, NULL);
 }
 
-void Sleep::gpioTask(void *arg)
+void Sleep::start()
+{
+  if (!started)
+  {
+    started = true;
+    xTaskCreate(sleepTask, "sleep_task", 2048, NULL, 10, NULL);
+    ESP_LOGI(TAG, "Monitor started");
+  }
+}
+
+void Sleep::sleepTask(void *arg)
 {
   for (;;)
   {
-    if (gpio_get_level(ESP_WAKEUP) == 0) {
-      // 5 second of LOW enters deep sleep
-      vTaskDelay(5000 / portTICK_RATE_MS);
-      if (gpio_get_level(ESP_WAKEUP) == 0) {
-        ESP_LOGI(TAG, "Entering deep sleep");
+    if (gpio_get_level(ESP_WAKEUP) == 0)
+    {
+      // 1 second of LOW enters deep sleep
+      vTaskDelay(1000 / portTICK_RATE_MS);
+      if (gpio_get_level(ESP_WAKEUP) == 0)
+      {
         xTaskCreate(stopRingingTask, "stop_ringing", 2048, NULL, 10, NULL);
+        vTaskDelete(NULL);
       }
     }
     vTaskDelay(500 / portTICK_RATE_MS);
@@ -44,12 +56,13 @@ void Sleep::stopRingingTask(void *arg)
 {
   HA::updateState("LOCK", false);
   uint32_t delay = 1000 / portTICK_RATE_MS;
-  if (!wasAwoken) {
-    // extra delay in case we were not awoken by ringing
-    // we could also check the wake up reason to find out
-    delay = 5000 / portTICK_RATE_MS;
-  }
+  // if (!wasAwoken) {
+  //   // extra delay in case we were not awoken by ringing
+  //   // we could also check the wake up reason to find out
+  //   delay = 5000 / portTICK_RATE_MS;
+  // }
   vTaskDelay(delay);
+  ESP_LOGI(TAG, "Entering deep sleep");
   esp_deep_sleep_start();
   vTaskDelete(NULL); // won't really matter
 }

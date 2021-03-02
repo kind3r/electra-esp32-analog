@@ -189,6 +189,11 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
     ESP_LOGI(TAG, "Other event id:%d", event->event_id);
     break;
   }
+
+  if (event->event_id != MQTT_EVENT_BEFORE_CONNECT)
+  {
+    Sleep::start();
+  }
 }
 
 bool HA::setupRequired()
@@ -201,7 +206,8 @@ bool HA::setupRequired()
   return true;
 }
 
-void HA::createDevice(cJSON *&device) {
+void HA::createDevice(cJSON *&device)
+{
   // device configuration, common for all entities
   device = cJSON_CreateObject();
   cJSON *name = cJSON_CreateString("Electra IA003");

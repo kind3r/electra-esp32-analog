@@ -14,9 +14,11 @@
 class Sleep {
   public:
     static void init();
+    static void start();
   private:
     static bool wasAwoken;
-    static void gpioTask(void *arg);
+    static bool started;
+    static void sleepTask(void *arg);
     static void stopRingingTask(void *arg);
 };
 

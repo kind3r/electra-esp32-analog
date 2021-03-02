@@ -16,11 +16,9 @@ extern "C"
 
 void app_main()
 {
-  meminfo();
   ESP_ERROR_CHECK(nvs_flash_init());
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
-  meminfo();
 
   Sleep::init();
 
@@ -29,27 +27,16 @@ void app_main()
   if (Settings::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during Settings init");
-    // panic ?
-    for (;;)
-    {
-    }
+    Sleep::start();
   }
   else if (HA::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during HA init");
-    // panic ?
-    for (;;)
-    {
-    }
+    Sleep::start();
   }
   else if (WiFi::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during WiFi init");
-    // panic ?
-    for (;;)
-    {
-    }
+    Sleep::start();
   }
-
-  meminfo();
 }

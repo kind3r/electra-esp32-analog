@@ -5,14 +5,22 @@ static const char *TAG = "WiFi";
 int WiFi::s_retry_num = 0;
 EventGroupHandle_t WiFi::s_wifi_event_group;
 
-esp_err_t WiFi::init() {
+esp_err_t WiFi::init()
+{
   esp_err_t ret = Settings::init();
-  if (ret != ESP_OK) {
+  if (ret != ESP_OK)
+  {
     return ret;
   }
 
-  wifi_init_sta(Settings::getSsid(), Settings::getPass());
-  return ESP_OK;
+  if (wifi_init_sta(Settings::getSsid(), Settings::getPass()))
+  {
+    return ESP_OK;
+  }
+  else
+  {
+    return ESP_FAIL;
+  }
 }
 
 void WiFi::event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
@@ -44,7 +52,7 @@ void WiFi::event_handler(void *arg, esp_event_base_t event_base, int32_t event_i
   }
 }
 
-void WiFi::wifi_init_sta(char *ssid, char *pass)
+bool WiFi::wifi_init_sta(char *ssid, char *pass)
 {
   s_wifi_event_group = xEventGroupCreate();
 
@@ -86,11 +94,13 @@ void WiFi::wifi_init_sta(char *ssid, char *pass)
                                          pdFALSE,
                                          portMAX_DELAY);
 
+  bool success = false;
   /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
      * happened. */
   if (bits & WIFI_CONNECTED_BIT)
   {
     ESP_LOGI(TAG, "connected to ap SSID:%s password:%s", ssid, pass);
+    success = true;
   }
   else if (bits & WIFI_FAIL_BIT)
   {
@@ -105,4 +115,6 @@ void WiFi::wifi_init_sta(char *ssid, char *pass)
   ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
   ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
   vEventGroupDelete(s_wifi_event_group);
+
+  return success;
 }
