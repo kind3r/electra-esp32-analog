@@ -1,7 +1,6 @@
 #include "ha.h"
 
 static const char *TAG = "HomeAssistant";
-static const char *LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false}";
 
 uint8_t *HA::buffer = NULL;
 esp_event_handler_instance_t HA::instance_lost_ip;
@@ -11,30 +10,53 @@ esp_mqtt_client_handle_t HA::mqtt = NULL;
 bool HA::unlockTaskRunning = false;
 
 std::string HA::configTopic;
-std::string HA::configStatusTopic;
+std::string HA::configRingingTopic;
+std::string HA::configBatteryTopic;
 std::string HA::stateTopic;
 std::string HA::commandTopic;
-std::string HA::statusEntity;
+std::string HA::ringingEntity;
+std::string HA::batteryEntity;
+std::string HA::currentVersion;
+std::string HA::LWTMessage;
+
+extern "C"
+{
+  int rom_phy_get_vdd33();
+}
 
 esp_err_t HA::init()
 {
   buffer = new uint8_t[ELECTRA_ESP_HA_BUFFER_SIZE];
 
+  currentVersion = Settings::getMqttUrl();
+  currentVersion += ELECTRA_ESP_HA_VERSION;
+
   configTopic = "homeassistant/lock/";
   configTopic += Settings::getEntity();
   configTopic += "/lock/config";
 
-  configStatusTopic = "homeassistant/binary_sensor/";
-  configStatusTopic += Settings::getEntity();
-  configStatusTopic += "/status/config";
+  configRingingTopic = "homeassistant/binary_sensor/";
+  configRingingTopic += Settings::getEntity();
+  configRingingTopic += "/ringing/config";
+
+  configBatteryTopic = "homeassistant/sensor/";
+  configBatteryTopic += Settings::getEntity();
+  configBatteryTopic += "/battery/config";
 
   stateTopic = "electra/";
   stateTopic += Settings::getEntity();
 
   commandTopic = stateTopic + "/set";
 
-  statusEntity = Settings::getEntity();
-  statusEntity += "_status";
+  ringingEntity = Settings::getEntity();
+  ringingEntity += "_ringing";
+
+  batteryEntity = Settings::getEntity();
+  batteryEntity += "_battery";
+
+  LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false,\"battery\":";
+  LWTMessage += "90";
+  LWTMessage += "}";
 
   mqttConfig = new esp_mqtt_client_config_t();
   mqttConfig->uri = Settings::getMqttUrl();
@@ -42,8 +64,7 @@ esp_err_t HA::init()
   mqttConfig->password = Settings::getMqttPass();
   mqttConfig->keepalive = 5;
   mqttConfig->lwt_topic = stateTopic.c_str();
-  mqttConfig->lwt_msg = LWTMessage;
-  // mqttConfig->lwt_msg_len = strlen(LWTMessage) + 1;
+  mqttConfig->lwt_msg = LWTMessage.c_str();
   mqttConfig->lwt_qos = 1;
   mqttConfig->lwt_retain = 1;
 
@@ -99,14 +120,25 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
   {
   case MQTT_EVENT_CONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-    // TODO: entity setup should only be done once, maybe store in nvs
-    // if config was done so we don't waste the time
-    setupEntity();
-    setupStatusEntity();
+    if (setupRequired()) // only setup entities if not already done so
+    {
+      ESP_LOGI(TAG, "Updating HA configuration");
+      setupEntity();
+      setupStatusEntity();
+      setupBatteryEntity();
+      Settings::setHaVersion(currentVersion.c_str());
+    }
 
     esp_mqtt_client_subscribe(mqtt, commandTopic.c_str(), 1);
 
-    updateState();
+    if (gpio_get_level(ESP_WAKEUP) == 1)
+    {
+      updateState();
+    }
+    else
+    {
+      updateState("LOCK", false);
+    }
     break;
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -133,7 +165,8 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
       data[event->data_len] = '\0';
       if (strcmp(data, "UNLOCK") == 0)
       {
-        if (!unlockTaskRunning) {
+        if (!unlockTaskRunning)
+        {
           unlockTaskRunning = true;
           ESP_LOGI(TAG, "Performing UNLOCK");
           // run unlock sequence in a separate thread so that mqtt status messages get sent to HA
@@ -158,10 +191,19 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
   }
 }
 
-void HA::setupEntity()
+bool HA::setupRequired()
 {
-  // device configuration
-  cJSON *device = cJSON_CreateObject();
+  char *storedVersion = Settings::getHaVersion();
+  if (strcmp(storedVersion, currentVersion.c_str()) == 0)
+  {
+    return false;
+  }
+  return true;
+}
+
+void HA::createDevice(cJSON *&device) {
+  // device configuration, common for all entities
+  device = cJSON_CreateObject();
   cJSON *name = cJSON_CreateString("Electra IA003");
   cJSON_AddItemToObject(device, "name", name);
   cJSON *manufacturer = cJSON_CreateString("kind3r");
@@ -174,6 +216,12 @@ void HA::setupEntity()
   cJSON_AddItemToObject(device, "identifiers", identifiers);
   cJSON *identifier = cJSON_CreateString(Settings::getEntity());
   cJSON_AddItemToArray(identifiers, identifier);
+}
+
+void HA::setupEntity()
+{
+  cJSON *device;
+  createDevice(device);
 
   // entity configuration
   cJSON *entity = cJSON_CreateObject();
@@ -200,6 +248,8 @@ void HA::setupEntity()
   cJSON_AddItemToObject(entity, "optimistic", optimistic);
   cJSON *retain = cJSON_CreateBool(false);
   cJSON_AddItemToObject(entity, "retain", retain);
+  cJSON *platform = cJSON_CreateString("mqtt");
+  cJSON_AddItemToObject(entity, "platform", platform);
 
   cJSON_PrintPreallocated(entity, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
   ESP_LOGI(TAG, "%s", buffer);
@@ -215,48 +265,74 @@ void HA::setupEntity()
 
 void HA::setupStatusEntity()
 {
-  // device configuration
-  cJSON *device = cJSON_CreateObject();
-  cJSON *name = cJSON_CreateString("Electra IA003");
-  cJSON_AddItemToObject(device, "name", name);
-  cJSON *manufacturer = cJSON_CreateString("kind3r");
-  cJSON_AddItemToObject(device, "manufacturer", manufacturer);
-  cJSON *model = cJSON_CreateString("ESP32");
-  cJSON_AddItemToObject(device, "model", model);
-  cJSON *sw_version = cJSON_CreateString("0.0.1");
-  cJSON_AddItemToObject(device, "sw_version", sw_version);
-  cJSON *identifiers = cJSON_CreateArray();
-  cJSON_AddItemToObject(device, "identifiers", identifiers);
-  cJSON *identifier = cJSON_CreateString(Settings::getEntity());
-  cJSON_AddItemToArray(identifiers, identifier);
+  cJSON *device;
+  createDevice(device);
 
-  cJSON *status = cJSON_CreateObject();
-  cJSON *unique_id = cJSON_CreateString(statusEntity.c_str());
-  cJSON_AddItemToObject(status, "unique_id", unique_id);
-  cJSON *name2 = cJSON_CreateString("Electra IA003 Ringing");
-  cJSON_AddItemToObject(status, "name", name2);
-  cJSON_AddItemToObject(status, "device", device);
+  cJSON *ringing = cJSON_CreateObject();
+  cJSON *unique_id = cJSON_CreateString(ringingEntity.c_str());
+  cJSON_AddItemToObject(ringing, "unique_id", unique_id);
+  cJSON *name = cJSON_CreateString("Electra IA003 Ringing");
+  cJSON_AddItemToObject(ringing, "name", name);
+  cJSON_AddItemToObject(ringing, "device", device);
   cJSON *state_topic = cJSON_CreateString(stateTopic.c_str());
-  cJSON_AddItemToObject(status, "state_topic", state_topic);
-  cJSON *value_template2 = cJSON_CreateString("{{ value_json.ringing }}");
-  cJSON_AddItemToObject(status, "value_template", value_template2);
+  cJSON_AddItemToObject(ringing, "state_topic", state_topic);
+  cJSON *value_template = cJSON_CreateString("{{ value_json.ringing }}");
+  cJSON_AddItemToObject(ringing, "value_template", value_template);
   cJSON *payload_on = cJSON_CreateBool(true);
-  cJSON_AddItemToObject(status, "payload_on", payload_on);
+  cJSON_AddItemToObject(ringing, "payload_on", payload_on);
   cJSON *payload_off = cJSON_CreateBool(false);
-  cJSON_AddItemToObject(status, "payload_off", payload_off);
-  cJSON *icon = cJSON_CreateString("mdi:bell");
-  cJSON_AddItemToObject(status, "icon", icon);
+  cJSON_AddItemToObject(ringing, "payload_off", payload_off);
+  cJSON *platform = cJSON_CreateString("mqtt");
+  cJSON_AddItemToObject(ringing, "platform", platform);
+  cJSON *json_attributes_topic = cJSON_CreateString(stateTopic.c_str());
+  cJSON_AddItemToObject(ringing, "json_attributes_topic", json_attributes_topic);
 
-  cJSON_PrintPreallocated(status, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
+  cJSON_PrintPreallocated(ringing, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
   ESP_LOGI(TAG, "%s", buffer);
 
-  int msg_id = esp_mqtt_client_publish(mqtt, configStatusTopic.c_str(), (char *)buffer, 0, 1, 1);
+  int msg_id = esp_mqtt_client_publish(mqtt, configRingingTopic.c_str(), (char *)buffer, 0, 1, 1);
   if (msg_id == -1)
   {
     ESP_LOGE(TAG, "Error sending entity status config message");
   }
 
-  cJSON_Delete(status);
+  cJSON_Delete(ringing);
+}
+
+void HA::setupBatteryEntity()
+{
+  cJSON *device;
+  createDevice(device);
+
+  cJSON *battery = cJSON_CreateObject();
+  cJSON *unique_id = cJSON_CreateString(batteryEntity.c_str());
+  cJSON_AddItemToObject(battery, "unique_id", unique_id);
+  cJSON *name = cJSON_CreateString("Electra IA003 Battery");
+  cJSON_AddItemToObject(battery, "name", name);
+  cJSON_AddItemToObject(battery, "device", device);
+  cJSON *state_topic = cJSON_CreateString(stateTopic.c_str());
+  cJSON_AddItemToObject(battery, "state_topic", state_topic);
+  cJSON *value_template = cJSON_CreateString("{{ value_json.battery }}");
+  cJSON_AddItemToObject(battery, "value_template", value_template);
+  cJSON *device_class = cJSON_CreateString("battery");
+  cJSON_AddItemToObject(battery, "device_class", device_class);
+  cJSON *unit_of_measurement = cJSON_CreateString("%");
+  cJSON_AddItemToObject(battery, "unit_of_measurement", unit_of_measurement);
+  cJSON *platform = cJSON_CreateString("mqtt");
+  cJSON_AddItemToObject(battery, "platform", platform);
+  cJSON *json_attributes_topic = cJSON_CreateString(stateTopic.c_str());
+  cJSON_AddItemToObject(battery, "json_attributes_topic", json_attributes_topic);
+
+  cJSON_PrintPreallocated(battery, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
+  ESP_LOGI(TAG, "%s", buffer);
+
+  int msg_id = esp_mqtt_client_publish(mqtt, configBatteryTopic.c_str(), (char *)buffer, 0, 1, 1);
+  if (msg_id == -1)
+  {
+    ESP_LOGE(TAG, "Error sending entity status config message");
+  }
+
+  cJSON_Delete(battery);
 }
 
 void HA::updateState(const char *lockState, bool lockRinging)
@@ -266,6 +342,8 @@ void HA::updateState(const char *lockState, bool lockRinging)
   cJSON_AddItemToObject(state, "state", status);
   cJSON *ringing = cJSON_CreateBool(lockRinging);
   cJSON_AddItemToObject(state, "ringing", ringing);
+  cJSON *battery = cJSON_CreateNumber(90);
+  cJSON_AddItemToObject(state, "battery", battery);
 
   cJSON_PrintPreallocated(state, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
   ESP_LOGI(TAG, "%s", buffer);
@@ -279,7 +357,8 @@ void HA::updateState(const char *lockState, bool lockRinging)
   cJSON_Delete(state);
 }
 
-void HA::unlockTask(void *arg) {
+void HA::unlockTask(void *arg)
+{
   updateState("UNLOCK", false);
   Intercom::open();
   updateState("LOCK", false);

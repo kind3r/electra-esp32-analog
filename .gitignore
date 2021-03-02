@@ -37,3 +37,5 @@
 sdkconfig.old
 
 data/config.json
+
+~$*

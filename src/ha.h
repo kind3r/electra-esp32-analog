@@ -1,6 +1,8 @@
 #ifndef ELECTRA_ESP_HA_H
 #define ELECTRA_ESP_HA_H
 
+#define ELECTRA_ESP_HA_VERSION "2"
+
 #define ELECTRA_ESP_HA_BUFFER_SIZE 4096
 
 #include <string>
@@ -11,11 +13,13 @@
 #include <cJSON.h>
 #include "settings.h"
 #include "intercom.h"
+#include "sleep.h"
 
 class HA
 {
 public:
   static esp_err_t init();
+  static void updateState(const char *lockState = "LOCK", bool lockRinging = true);
 
 private:
   static uint8_t *buffer;
@@ -27,13 +31,19 @@ private:
   static bool unlockTaskRunning;
   static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
   static std::string configTopic;
-  static std::string configStatusTopic;
+  static std::string configRingingTopic;
+  static std::string configBatteryTopic;
   static std::string stateTopic;
   static std::string commandTopic;
-  static std::string statusEntity;
+  static std::string ringingEntity;
+  static std::string batteryEntity;
+  static std::string currentVersion;
+  static std::string LWTMessage;
+  static bool setupRequired();
+  static void createDevice(cJSON *&device);
   static void setupEntity();
   static void setupStatusEntity();
-  static void updateState(const char *lockState = "LOCK", bool lockRinging = true);
+  static void setupBatteryEntity();
   static void unlockTask(void *arg);
 };
 
