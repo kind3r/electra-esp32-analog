@@ -10,13 +10,14 @@
 #include "ha.h"
 
 #define ESP_WAKEUP GPIO_NUM_14
+#define ESP_WAKE_HOLD GPIO_NUM_27
 
 class Sleep {
   public:
     static void init();
     static void start();
   private:
-    static bool wasAwoken;
+    static bool holdAwake;
     static bool started;
     static void sleepTask(void *arg);
     static void stopRingingTask(void *arg);

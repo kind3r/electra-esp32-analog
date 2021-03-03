@@ -2,31 +2,31 @@
 
 static const char *TAG = "Sleep";
 
-bool Sleep::wasAwoken = false;
+bool Sleep::holdAwake = false;
 bool Sleep::started = false;
 
 void Sleep::init()
 {
-  esp_sleep_enable_ext1_wakeup((1ULL << ESP_WAKEUP), ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_ext1_wakeup((1ULL << ESP_WAKEUP | 1ULL << ESP_WAKE_HOLD), ESP_EXT1_WAKEUP_ANY_HIGH);
 
   // setup wakeup pin as input
   gpio_config_t io_conf;
   io_conf.intr_type = GPIO_INTR_ANYEDGE;
   io_conf.mode = GPIO_MODE_INPUT;
-  io_conf.pin_bit_mask = (1ULL << ESP_WAKEUP);
+  io_conf.pin_bit_mask = (1ULL << ESP_WAKEUP | 1ULL << ESP_WAKE_HOLD);
   io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
   io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
   gpio_config(&io_conf);
 
-  if (gpio_get_level(ESP_WAKEUP) == 1)
+  if (gpio_get_level(ESP_WAKE_HOLD) == 1)
   {
-    wasAwoken = true;
+    holdAwake = true;
   }
 }
 
 void Sleep::start()
 {
-  if (!started)
+  if (!started && !holdAwake)
   {
     started = true;
     xTaskCreate(sleepTask, "sleep_task", 2048, NULL, 10, NULL);
