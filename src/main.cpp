@@ -8,6 +8,7 @@
 #include "util.h"
 #include "intercom.h"
 #include "sleep.h"
+#include "battery.h"
 
 extern "C"
 {
@@ -19,6 +20,8 @@ void app_main()
   ESP_ERROR_CHECK(nvs_flash_init());
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+  Battery::init();
 
   Sleep::init();
 

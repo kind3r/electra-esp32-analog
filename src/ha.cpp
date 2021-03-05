@@ -55,7 +55,7 @@ esp_err_t HA::init()
   batteryEntity += "_battery";
 
   LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false,\"battery\":";
-  LWTMessage += "90";
+  LWTMessage += Battery::getBatteryPercent();
   LWTMessage += "}";
 
   mqttConfig = new esp_mqtt_client_config_t();
@@ -348,7 +348,7 @@ void HA::updateState(const char *lockState, bool lockRinging)
   cJSON_AddItemToObject(state, "state", status);
   cJSON *ringing = cJSON_CreateBool(lockRinging);
   cJSON_AddItemToObject(state, "ringing", ringing);
-  cJSON *battery = cJSON_CreateNumber(90);
+  cJSON *battery = cJSON_CreateNumber(Battery::getBatteryPercent());
   cJSON_AddItemToObject(state, "battery", battery);
 
   cJSON_PrintPreallocated(state, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);

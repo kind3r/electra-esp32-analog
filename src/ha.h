@@ -14,6 +14,7 @@
 #include "settings.h"
 #include "intercom.h"
 #include "sleep.h"
+#include "battery.h"
 
 class HA
 {
