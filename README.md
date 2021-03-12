@@ -1,6 +1,21 @@
 # electra-ia003-esp
 
-de incercat:
-- rezistenta de 2.2K intre PX si AVP apoi 0 pentru deschidere - DA merge
-- rezistenta mai mare la esp reset delay pentru timp mai lung de incarcare al capacitorului pentru boost-ul necesar la power up - NOPE
-- schema cu optocuploare pe alt board, daca nu merge, de scos dioda de la AVP out si pus dioda invers pe ieserea de la opto - merge cu tot cu dioda so far
+## TODO
+
+Document the project:  
+- Purpose  
+- Schematic, BOM, where to manufacture, share EasyEDA project
+- Configuration and how to program
+
+Treat MQTT error due do WiFi hickup:
+
+```
+I (1297) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+E (7657) esp-tls: couldn't get hostname for :aaa.bbb.ccc:
+E (7657) esp-tls: Failed to open new connection
+E (7657) TRANS_SSL: Failed to open a new connection
+E (7657) MQTT_CLIENT: Error transport connect
+I (7667) HomeAssistant: MQTT_EVENT_ERROR
+I (7667) Sleep: Monitor started
+I (7677) HomeAssistant: MQTT_EVENT_DISCONNECTED
+```
