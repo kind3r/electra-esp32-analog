@@ -6,6 +6,8 @@
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
 #include <esp_log.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #define ESP_BAT_EN GPIO_NUM_25
 #define ESP_BAT ADC1_CHANNEL_5

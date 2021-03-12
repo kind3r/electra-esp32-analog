@@ -39,6 +39,7 @@ void Battery::init()
 
   //Multisampling
   uint32_t adc_reading = 0;
+  vTaskDelay(100 / portTICK_RATE_MS);
   for (int i = 0; i < ESP_BAT_SAMPLES; i++)
   {
     adc_reading += adc1_get_raw(ESP_BAT);
