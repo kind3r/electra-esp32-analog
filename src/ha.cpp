@@ -55,7 +55,7 @@ esp_err_t HA::init()
   batteryEntity += "_battery";
 
   LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false,\"battery\":";
-  LWTMessage += Battery::getBatteryPercent();
+  LWTMessage += std::to_string(Battery::getBatteryPercent());
   LWTMessage += "}";
 
   mqttConfig = new esp_mqtt_client_config_t();
