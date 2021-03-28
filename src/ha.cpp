@@ -12,10 +12,12 @@ bool HA::unlockTaskRunning = false;
 std::string HA::configTopic;
 std::string HA::configRingingTopic;
 std::string HA::configBatteryTopic;
+std::string HA::configVoltageTopic;
 std::string HA::stateTopic;
 std::string HA::commandTopic;
 std::string HA::ringingEntity;
 std::string HA::batteryEntity;
+std::string HA::voltageEntity;
 std::string HA::currentVersion;
 std::string HA::LWTMessage;
 
@@ -43,6 +45,10 @@ esp_err_t HA::init()
   configBatteryTopic += Settings::getEntity();
   configBatteryTopic += "/battery/config";
 
+  configVoltageTopic = "homeassistant/sensor/";
+  configVoltageTopic += Settings::getEntity();
+  configVoltageTopic += "/voltage/config";
+
   stateTopic = "electra/";
   stateTopic += Settings::getEntity();
 
@@ -54,8 +60,13 @@ esp_err_t HA::init()
   batteryEntity = Settings::getEntity();
   batteryEntity += "_battery";
 
+  voltageEntity = Settings::getEntity();
+  voltageEntity += "_voltage";
+
   LWTMessage = "{\"state\":\"LOCK\",\"ringing\":false,\"battery\":";
   LWTMessage += std::to_string(Battery::getBatteryPercent());
+  LWTMessage += ",\"voltage\":";
+  LWTMessage += std::to_string(Battery::getBatteryVoltage());
   LWTMessage += "}";
 
   mqttConfig = new esp_mqtt_client_config_t();
@@ -126,6 +137,7 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
       setupEntity();
       setupStatusEntity();
       setupBatteryEntity();
+      setupVoltageEntity();
       Settings::setHaVersion(currentVersion.c_str());
     }
 
@@ -263,7 +275,7 @@ void HA::setupEntity()
   int msg_id = esp_mqtt_client_publish(mqtt, configTopic.c_str(), (char *)buffer, 0, 1, 1);
   if (msg_id == -1)
   {
-    ESP_LOGE(TAG, "Error sending entity config message");
+    ESP_LOGE(TAG, "Error sending entity config message for device");
   }
 
   cJSON_Delete(entity);
@@ -299,7 +311,7 @@ void HA::setupStatusEntity()
   int msg_id = esp_mqtt_client_publish(mqtt, configRingingTopic.c_str(), (char *)buffer, 0, 1, 1);
   if (msg_id == -1)
   {
-    ESP_LOGE(TAG, "Error sending entity status config message");
+    ESP_LOGE(TAG, "Error sending entity status config message for ringing");
   }
 
   cJSON_Delete(ringing);
@@ -335,10 +347,46 @@ void HA::setupBatteryEntity()
   int msg_id = esp_mqtt_client_publish(mqtt, configBatteryTopic.c_str(), (char *)buffer, 0, 1, 1);
   if (msg_id == -1)
   {
-    ESP_LOGE(TAG, "Error sending entity status config message");
+    ESP_LOGE(TAG, "Error sending entity status config message for battery");
   }
 
   cJSON_Delete(battery);
+}
+
+void HA::setupVoltageEntity()
+{
+  cJSON *device;
+  createDevice(device);
+
+  cJSON *voltage = cJSON_CreateObject();
+  cJSON *unique_id = cJSON_CreateString(voltageEntity.c_str());
+  cJSON_AddItemToObject(voltage, "unique_id", unique_id);
+  cJSON *name = cJSON_CreateString("Electra IA003 Battery Voltage");
+  cJSON_AddItemToObject(voltage, "name", name);
+  cJSON_AddItemToObject(voltage, "device", device);
+  cJSON *state_topic = cJSON_CreateString(stateTopic.c_str());
+  cJSON_AddItemToObject(voltage, "state_topic", state_topic);
+  cJSON *value_template = cJSON_CreateString("{{ value_json.voltage }}");
+  cJSON_AddItemToObject(voltage, "value_template", value_template);
+  cJSON *device_class = cJSON_CreateString("voltage");
+  cJSON_AddItemToObject(voltage, "device_class", device_class);
+  cJSON *unit_of_measurement = cJSON_CreateString("mV");
+  cJSON_AddItemToObject(voltage, "unit_of_measurement", unit_of_measurement);
+  cJSON *platform = cJSON_CreateString("mqtt");
+  cJSON_AddItemToObject(voltage, "platform", platform);
+  cJSON *json_attributes_topic = cJSON_CreateString(stateTopic.c_str());
+  cJSON_AddItemToObject(voltage, "json_attributes_topic", json_attributes_topic);
+
+  cJSON_PrintPreallocated(voltage, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
+  ESP_LOGI(TAG, "%s", buffer);
+
+  int msg_id = esp_mqtt_client_publish(mqtt, configVoltageTopic.c_str(), (char *)buffer, 0, 1, 1);
+  if (msg_id == -1)
+  {
+    ESP_LOGE(TAG, "Error sending entity status config message for voltage");
+  }
+
+  cJSON_Delete(voltage);
 }
 
 void HA::updateState(const char *lockState, bool lockRinging)
@@ -350,6 +398,8 @@ void HA::updateState(const char *lockState, bool lockRinging)
   cJSON_AddItemToObject(state, "ringing", ringing);
   cJSON *battery = cJSON_CreateNumber(Battery::getBatteryPercent());
   cJSON_AddItemToObject(state, "battery", battery);
+  cJSON *voltage = cJSON_CreateNumber(Battery::getBatteryVoltage());
+  cJSON_AddItemToObject(state, "voltage", voltage);
 
   cJSON_PrintPreallocated(state, (char *)buffer, ELECTRA_ESP_HA_BUFFER_SIZE, false);
   ESP_LOGI(TAG, "%s", buffer);

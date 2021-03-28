@@ -10,7 +10,6 @@
 #include "ha.h"
 
 #define ESP_WAKEUP GPIO_NUM_14
-#define ESP_WAKE_HOLD GPIO_NUM_27
 #define ESP_WAKEUP_INTERVAL 3 * 60 * 60 // every 3h to report battery
 
 class Sleep {
@@ -18,7 +17,6 @@ class Sleep {
     static void init();
     static void start();
   private:
-    static bool holdAwake;
     static bool started;
     static void sleepTask(void *arg);
     static void stopRingingTask(void *arg);

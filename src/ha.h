@@ -1,7 +1,7 @@
 #ifndef ELECTRA_ESP_HA_H
 #define ELECTRA_ESP_HA_H
 
-#define ELECTRA_ESP_HA_VERSION "2"
+#define ELECTRA_ESP_HA_VERSION "3"
 
 #define ELECTRA_ESP_HA_BUFFER_SIZE 4096
 
@@ -34,10 +34,12 @@ private:
   static std::string configTopic;
   static std::string configRingingTopic;
   static std::string configBatteryTopic;
+  static std::string configVoltageTopic;
   static std::string stateTopic;
   static std::string commandTopic;
   static std::string ringingEntity;
   static std::string batteryEntity;
+  static std::string voltageEntity;
   static std::string currentVersion;
   static std::string LWTMessage;
   static bool setupRequired();
@@ -45,6 +47,7 @@ private:
   static void setupEntity();
   static void setupStatusEntity();
   static void setupBatteryEntity();
+  static void setupVoltageEntity();
   static void unlockTask(void *arg);
 };
 

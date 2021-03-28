@@ -17,7 +17,7 @@
 #define ESP_R2 10
 // Battery voltage max and min
 #define ESP_BAT_MAX 3200
-#define ESP_BAT_MIN 2900
+#define ESP_BAT_MIN 2800
 
 class Battery {
   public:
