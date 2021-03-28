@@ -135,10 +135,10 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
     {
       updateState();
     }
-    else
-    {
-      updateState("LOCK", false);
-    }
+    // else
+    // {
+    //   updateState("LOCK", false);
+    // }
     break;
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");

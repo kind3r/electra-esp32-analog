@@ -11,6 +11,7 @@
 
 #define ESP_WAKEUP GPIO_NUM_14
 #define ESP_WAKE_HOLD GPIO_NUM_27
+#define ESP_WAKEUP_INTERVAL 3 * 60 * 60 // every 3h to report battery
 
 class Sleep {
   public:

@@ -7,7 +7,19 @@ bool Sleep::started = false;
 
 void Sleep::init()
 {
+  switch (esp_sleep_get_wakeup_cause()) {
+    case ESP_SLEEP_WAKEUP_EXT1:
+      ESP_LOGI(TAG, "Wakeup: EXT1");
+      break;
+    case ESP_SLEEP_WAKEUP_TIMER:
+      ESP_LOGI(TAG, "Wakeup: timer");
+      break;
+    default:
+      ESP_LOGI(TAG, "Wakeup: default");
+  }
+
   esp_sleep_enable_ext1_wakeup((1ULL << ESP_WAKEUP | 1ULL << ESP_WAKE_HOLD), ESP_EXT1_WAKEUP_ANY_HIGH);
+  esp_sleep_enable_timer_wakeup(1000000ULL * ESP_WAKEUP_INTERVAL);
 
   // setup wakeup pin as input
   gpio_config_t io_conf;
@@ -54,14 +66,9 @@ void Sleep::sleepTask(void *arg)
 
 void Sleep::stopRingingTask(void *arg)
 {
-  HA::updateState("LOCK", false);
-  uint32_t delay = 1000 / portTICK_RATE_MS;
-  // if (!wasAwoken) {
-  //   // extra delay in case we were not awoken by ringing
-  //   // we could also check the wake up reason to find out
-  //   delay = 5000 / portTICK_RATE_MS;
-  // }
-  vTaskDelay(delay);
+  // HA::updateState("LOCK", false);
+  // uint32_t delay = 1000 / portTICK_RATE_MS;
+  // vTaskDelay(delay);
   ESP_LOGI(TAG, "Entering deep sleep");
   esp_deep_sleep_start();
   vTaskDelete(NULL); // won't really matter
