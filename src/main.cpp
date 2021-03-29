@@ -33,7 +33,7 @@ void app_main()
     ESP_LOGE("main", "Error during Settings init");
     // enter config mode
     WiFiAP::init();
-    // Sleep::start();
+    Sleep::start(300); // sleep after 5 minutes
   }
   else if (HA::init() != ESP_OK)
   {

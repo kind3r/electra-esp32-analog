@@ -3,6 +3,7 @@
 static const char *TAG = "Sleep";
 
 bool Sleep::started = false;
+int Sleep::sleepDelay = 1;
 
 void Sleep::init()
 {
@@ -30,11 +31,12 @@ void Sleep::init()
   gpio_config(&io_conf);
 }
 
-void Sleep::start()
+void Sleep::start(int delay)
 {
   if (!started)
   {
     started = true;
+    sleepDelay = delay;
     xTaskCreate(sleepTask, "sleep_task", 2048, NULL, 10, NULL);
     ESP_LOGI(TAG, "Monitor started");
   }
@@ -47,7 +49,7 @@ void Sleep::sleepTask(void *arg)
     if (gpio_get_level(ESP_WAKEUP) == 0)
     {
       // 1 second of LOW enters deep sleep
-      vTaskDelay(1000 / portTICK_RATE_MS);
+      vTaskDelay(sleepDelay * 1000 / portTICK_RATE_MS);
       if (gpio_get_level(ESP_WAKEUP) == 0)
       {
         xTaskCreate(stopRingingTask, "stop_ringing", 2048, NULL, 10, NULL);

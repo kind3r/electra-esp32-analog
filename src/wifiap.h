@@ -39,6 +39,7 @@ private:
   static esp_err_t handleHome(httpd_req_t *req);
   static esp_err_t handleConfigGet(httpd_req_t *req);
   static esp_err_t handleConfigSet(httpd_req_t *req);
+  static void rebootTask(void *arg);
 };
 
 #endif

@@ -183,6 +183,7 @@ esp_err_t WiFiAP::handleConfigSet(httpd_req_t *req)
   {
     httpd_resp_sendstr(req, "OK");
     // reboot
+    xTaskCreate(rebootTask, "reboot_task", 2048, NULL, 10, NULL);
   }
   else
   {
@@ -201,4 +202,10 @@ void WiFiAP::mdns_start()
 
   //initialize web config service
   ESP_ERROR_CHECK(mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0));
+}
+
+void WiFiAP::rebootTask(void *arg) {
+  vTaskDelay(1000 / portTICK_RATE_MS);
+  esp_restart();
+  vTaskDelete(NULL);
 }

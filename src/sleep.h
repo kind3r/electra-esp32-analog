@@ -15,9 +15,10 @@
 class Sleep {
   public:
     static void init();
-    static void start();
+    static void start(int delay = 1);
   private:
     static bool started;
+    static int sleepDelay;
     static void sleepTask(void *arg);
     static void stopRingingTask(void *arg);
 };
