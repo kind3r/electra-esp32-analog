@@ -5,6 +5,7 @@
 #include "settings.h"
 #include "ha.h"
 #include "wifi.h"
+#include "wifiap.h"
 #include "util.h"
 #include "intercom.h"
 #include "sleep.h"
@@ -30,7 +31,9 @@ void app_main()
   if (Settings::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during Settings init");
-    Sleep::start();
+    // enter config mode
+    WiFiAP::init();
+    // Sleep::start();
   }
   else if (HA::init() != ESP_OK)
   {

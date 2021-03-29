@@ -9,6 +9,8 @@
 #define ELECTRA_ESP_CONFIG_BUFFER_SIZE 3072
 #endif
 
+#define ELECTRA_ESP_DEFAULT_CONFIG "{\"entity\": \"electra32\"}"
+
 #include <string>
 #include <string.h>
 #include <stdio.h>
@@ -35,6 +37,8 @@ public:
   static char *getMqttUser();
   static char *getMqttPass();
   static char *getEntity();
+  static size_t getConfigFile(uint8_t *buffer);
+  static esp_err_t putConfigFile(uint8_t *buffer, size_t bufferLen);
 
 private:
   static bool ready;

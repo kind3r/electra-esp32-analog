@@ -338,3 +338,34 @@ size_t Settings::getBytes(const char *key, void *buf, size_t maxLen)
   }
   return len;
 }
+
+size_t Settings::getConfigFile(uint8_t *buffer) {
+  FILE *fd = nullptr;
+  fd = fopen(ELECTRA_ESP_SETTINGS_FILE, "r");
+  if (!fd)
+  {
+    ESP_LOGI(TAG, "Providing default config file");
+    size_t fileLen = strlen(ELECTRA_ESP_DEFAULT_CONFIG);
+    memcpy(buffer, ELECTRA_ESP_DEFAULT_CONFIG, fileLen);
+    buffer[fileLen] = '\0';
+    return fileLen;
+  } else {
+    size_t fileLen = fread(buffer, 1, ELECTRA_ESP_CONFIG_BUFFER_SIZE, fd);
+    fclose(fd);
+    return fileLen;
+  }
+}
+
+esp_err_t Settings::putConfigFile(uint8_t *buffer, size_t bufferLen) {
+  FILE *fd = nullptr;
+  fd = fopen(ELECTRA_ESP_SETTINGS_FILE, "w");
+  if (!fd)
+  {
+    return ESP_FAIL;
+  } else {
+    fwrite(buffer, 1, bufferLen, fd);
+    fclose(fd);
+    return ESP_OK;
+  }
+  return ESP_OK;
+}
