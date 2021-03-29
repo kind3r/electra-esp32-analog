@@ -19,6 +19,7 @@ esp_err_t WiFi::init()
   }
   else
   {
+    forceSetupMode = true;
     return ESP_FAIL;
   }
 }
@@ -99,12 +100,12 @@ bool WiFi::wifi_init_sta(char *ssid, char *pass)
      * happened. */
   if (bits & WIFI_CONNECTED_BIT)
   {
-    ESP_LOGI(TAG, "connected to ap SSID:%s password:%s", ssid, pass);
+    ESP_LOGI(TAG, "connected to ap SSID:%s", ssid);
     success = true;
   }
   else if (bits & WIFI_FAIL_BIT)
   {
-    ESP_LOGE(TAG, "Failed to connect to SSID:%s, password:%s", ssid, pass);
+    ESP_LOGE(TAG, "Failed to connect to SSID:%s", ssid);
   }
   else
   {

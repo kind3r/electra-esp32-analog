@@ -189,6 +189,10 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
     break;
   case MQTT_EVENT_ERROR:
     ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
+    if (event->error_handle->error_type  != MQTT_ERROR_TYPE_NONE) {
+      forceSetupMode = true;
+      esp_restart();
+    }
     // if (event->error_handle->error_type == MQTT_ERROR_TYPE_ESP_TLS)
     // {
     //   log_error_if_nonzero("reported from esp-tls", event->error_handle->esp_tls_last_esp_err);

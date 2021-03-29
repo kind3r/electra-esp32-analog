@@ -56,6 +56,11 @@ esp_err_t Settings::init()
     ready = true;
   }
 
+  if (forceSetupMode) {
+    forceSetupMode = false;
+    return ESP_FAIL;
+  }
+
   return ready ? ESP_OK : ESP_FAIL;
 }
 
