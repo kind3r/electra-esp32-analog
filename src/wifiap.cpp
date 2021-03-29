@@ -80,7 +80,7 @@ void WiFiAP::wifi_init_softap()
   strcpy((char *)wifi_config.ap.password, ELECTRA_ESP_WIFI_CONFIG_PASS);
   wifi_config.ap.channel = ELECTRA_ESP_WIFI_CONFIG_CHANNEL;
   wifi_config.ap.max_connection = ELECTRA_ESP_WIFI_CONFIG_MAX_CONNECTIONS;
-  wifi_config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+  wifi_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
 
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
