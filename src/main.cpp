@@ -43,6 +43,7 @@ void app_main()
   else if (WiFi::init() != ESP_OK)
   {
     ESP_LOGE("main", "Error during WiFi init");
-    Sleep::start();
+    // Sleep::start();
+    esp_restart();
   }
 }

@@ -47,7 +47,7 @@ void WiFi::event_handler(void *arg, esp_event_base_t event_base, int32_t event_i
   else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
   {
     ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-    ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+    ESP_LOGI(TAG, "got ip: " IPSTR, IP2STR(&event->ip_info.ip));
     s_retry_num = 0;
     xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
   }
@@ -100,12 +100,12 @@ bool WiFi::wifi_init_sta(char *ssid, char *pass)
      * happened. */
   if (bits & WIFI_CONNECTED_BIT)
   {
-    ESP_LOGI(TAG, "connected to ap SSID:%s", ssid);
+    ESP_LOGI(TAG, "connected to ap SSID: %s", ssid);
     success = true;
   }
   else if (bits & WIFI_FAIL_BIT)
   {
-    ESP_LOGE(TAG, "Failed to connect to SSID:%s", ssid);
+    ESP_LOGE(TAG, "Failed to connect to SSID: %s", ssid);
   }
   else
   {

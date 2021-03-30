@@ -2,6 +2,8 @@
 
 static const char *TAG = "Settings";
 
+bool forceSetupMode;
+
 bool Settings::ready = false;
 uint32_t Settings::handle = 0;
 char *Settings::haVersion = NULL;
@@ -17,6 +19,10 @@ const char *nvs_errors[] = {"OTHER", "NOT_INITIALIZED", "NOT_FOUND", "TYPE_MISMA
 
 esp_err_t Settings::init()
 {
+  if (esp_reset_reason() == ESP_RST_POWERON) {
+    forceSetupMode = false;
+  }
+
   if (!ready)
   {
     esp_err_t ret;
@@ -58,6 +64,7 @@ esp_err_t Settings::init()
 
   if (forceSetupMode) {
     forceSetupMode = false;
+    ESP_LOGI(TAG, "Forcing setup mode");
     return ESP_FAIL;
   }
 

@@ -141,34 +141,26 @@ export default {
         this.errors = [];
         // clone the current configuration so we can replace it later
         let config = JSON.parse(JSON.stringify(this.config));
-        // only send changed values
-        let newConfig = {};
         if (config.ssid != this.ssid) {
-          newConfig.ssid = this.ssid;
           config.ssid = this.ssid;
         }
         if (config.pass != this.pass) {
-          newConfig.pass = this.pass;
           config.pass = this.pass;
         }
         if (config.mqttUrl != this.mqttUrl) {
-          newConfig.mqttUrl = this.mqttUrl;
           config.mqttUrl = this.mqttUrl;
         }
         if (config.mqttUser != this.mqttUser) {
-          newConfig.mqttUser = this.mqttUser;
           config.mqttUser = this.mqttUser;
         }
         if (config.mqttPass != this.mqttPass) {
-          newConfig.mqttPass = this.mqttPass;
           config.mqttPass = this.mqttPass;
         }
         if (config.entity != this.entity) {
-          newConfig.entity = this.entity;
           config.entity = this.entity;
         }
         try {
-          const response = await axios.post("/config", newConfig, {
+          const response = await axios.post("/config", config, {
             withCredentials: true,
           });
           if (response.data == "OK") {

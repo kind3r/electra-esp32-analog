@@ -8,11 +8,18 @@ int Sleep::sleepDelay = 1;
 void Sleep::init()
 {
   switch (esp_sleep_get_wakeup_cause()) {
+    case ESP_SLEEP_WAKEUP_EXT0:
     case ESP_SLEEP_WAKEUP_EXT1:
-      ESP_LOGI(TAG, "Wakeup: EXT1");
+      ESP_LOGI(TAG, "Wakeup: EXT");
       break;
     case ESP_SLEEP_WAKEUP_TIMER:
       ESP_LOGI(TAG, "Wakeup: timer");
+      break;
+    case ESP_SLEEP_WAKEUP_UNDEFINED:
+      ESP_LOGI(TAG, "Wakeup: undefined");
+      break;
+    case ESP_SLEEP_WAKEUP_ALL:
+      ESP_LOGI(TAG, "Wakeup: all");
       break;
     default:
       ESP_LOGI(TAG, "Wakeup: default");
