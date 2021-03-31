@@ -27,9 +27,9 @@ void app_main()
   
   Battery::init();
 
-  Sleep::init();
-
   Intercom::init();
+
+  Sleep::init();
 
   if (Settings::init() != ESP_OK)
   {

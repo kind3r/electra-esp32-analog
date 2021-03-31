@@ -143,7 +143,7 @@ void HA::mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t e
 
     esp_mqtt_client_subscribe(mqtt, commandTopic.c_str(), 1);
 
-    if (gpio_get_level(ESP_WAKEUP) == 1)
+    if (Intercom::isRinging())
     {
       updateState();
     }
