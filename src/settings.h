@@ -21,12 +21,15 @@
 #include <esp_system.h>
 #include <nvs.h>
 #include <nvs_flash.h>
+#include <driver/gpio.h>
 
 typedef enum {
     PT_I8, PT_U8, PT_I16, PT_U16, PT_I32, PT_U32, PT_I64, PT_U64, PT_STR, PT_BLOB, PT_INVALID
 } PreferenceType;
 
 extern RTC_NOINIT_ATTR bool forceSetupMode;
+
+#define ELECTRA_ESP_CONFIG GPIO_NUM_27
 
 class Settings
 {

@@ -48,7 +48,7 @@ void Led::blinkFast()
 
 void Led::setBlinkPattern(uint16_t *pattern, size_t patternLen)
 {
-  if (xSemaphoreTake(blinkSemaphore, 10) == pdTRUE)
+  if (xSemaphoreTake(blinkSemaphore, portMAX_DELAY) == pdTRUE)
   {
     blinkPatternLen = patternLen;
     if (blinkPattern != NULL)
