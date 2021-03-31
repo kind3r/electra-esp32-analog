@@ -3,6 +3,7 @@
 static const char *TAG = "Sleep";
 
 bool Sleep::started = false;
+bool Sleep::wasRinging = false;
 int Sleep::sleepDelay = 1;
 
 void Sleep::init()
@@ -40,8 +41,10 @@ void Sleep::init()
 
   if (gpio_get_level(ESP_WAKEUP) == 1)
   {
-    blinkPattern_t pattern = PATTERN_BLINK_FAST();
-    Led::setBlinkPattern(&pattern);
+    Led::blinkFast();
+    wasRinging = true;
+  } else {
+    wasRinging = false;
   }
 }
 
@@ -52,7 +55,7 @@ void Sleep::start(int delay)
     started = true;
     sleepDelay = delay;
     xTaskCreate(sleepTask, "sleep_task", 2048, NULL, 10, NULL);
-    ESP_LOGI(TAG, "Monitor started");
+    ESP_LOGI(TAG, "Monitor started %d", delay);
   }
 }
 
@@ -62,8 +65,9 @@ void Sleep::sleepTask(void *arg)
   {
     if (gpio_get_level(ESP_WAKEUP) == 0)
     {
-      blinkPattern_t pattern = PATTERN_BLINK_OFF();
-      Led::setBlinkPattern(&pattern);
+      if (wasRinging == true) {
+        Led::blinkOff();
+      }
       // 1 second of LOW enters deep sleep
       vTaskDelay(sleepDelay * 1000 / portTICK_RATE_MS);
       if (gpio_get_level(ESP_WAKEUP) == 0)

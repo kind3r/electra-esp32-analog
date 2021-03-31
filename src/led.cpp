@@ -2,9 +2,14 @@
 
 static const char *TAG = "Led";
 
+uint16_t blinkPatternOff[2] = {0, 100};
+uint16_t blinkPatternSlow[2] = {200, 1000};
+uint16_t blinkPatternFast[2] = {100, 100};
+
 SemaphoreHandle_t Led::blinkSemaphore = NULL;
 bool Led::blinkChanged;
-blinkPattern_t *Led::blinkPattern;
+uint16_t *Led::blinkPattern = NULL;
+size_t Led::blinkPatternLen = 0;
 
 void Led::init()
 {
@@ -18,20 +23,43 @@ void Led::init()
   gpio_config(&io_conf);
 
   gpio_set_level(ELECTRA_ESP_LED, 0);
-  blinkChanged = false;
   blinkSemaphore = xSemaphoreCreateBinary();
   xSemaphoreGive(blinkSemaphore);
-  blinkPattern_t patern = PATTERN_BLINK_OFF();
-  setBlinkPattern(&patern);
+  setBlinkPattern(blinkPatternOff, 2);
+  blinkChanged = false;
 
   xTaskCreate(ledTask, "led_task", 2048, NULL, 10, NULL);
 }
 
-void Led::setBlinkPattern(blinkPattern_t *patern)
+void Led::blinkOff()
+{
+  setBlinkPattern(blinkPatternOff, 2);
+}
+
+void Led::blinkSlow()
+{
+  setBlinkPattern(blinkPatternSlow, 2);
+}
+
+void Led::blinkFast()
+{
+  setBlinkPattern(blinkPatternFast, 2);
+}
+
+void Led::setBlinkPattern(uint16_t *pattern, size_t patternLen)
 {
   if (xSemaphoreTake(blinkSemaphore, 10) == pdTRUE)
   {
-    blinkPattern = patern;
+    blinkPatternLen = patternLen;
+    if (blinkPattern != NULL)
+    {
+      delete[] blinkPattern;
+    }
+    blinkPattern = new uint16_t[patternLen];
+    for (size_t i = 0; i < patternLen; i++)
+    {
+      blinkPattern[i] = pattern[i];
+    }
     blinkChanged = true;
     xSemaphoreGive(blinkSemaphore);
   }
@@ -43,16 +71,28 @@ void Led::setBlinkPattern(blinkPattern_t *patern)
 
 void Led::ledTask(void *arg)
 {
-  blinkPattern_t *pattern = NULL;
+  size_t patternLen = blinkPatternLen;
+  uint16_t *pattern;
+  pattern = new uint16_t[blinkPatternLen];
+  for (size_t i = 0; i < patternLen; i++)
+  {
+    pattern[i] = blinkPattern[i];
+  }
   bool ledOn = false;
   for (;;)
   {
     if (xSemaphoreTake(blinkSemaphore, 10) == pdTRUE)
     {
-      if (blinkChanged || pattern == NULL)
+      if (blinkChanged)
       {
         // change blink pattern
-        pattern = blinkPattern;
+        patternLen = blinkPatternLen;
+        delete[] pattern;
+        pattern = new uint16_t[blinkPatternLen];
+        for (size_t i = 0; i < patternLen; i++)
+        {
+          pattern[i] = blinkPattern[i];
+        }
         blinkChanged = false;
         gpio_set_level(ELECTRA_ESP_LED, 0);
         ledOn = false;
@@ -60,11 +100,14 @@ void Led::ledTask(void *arg)
       xSemaphoreGive(blinkSemaphore);
     }
     // do blink pattern
-    for (uint8_t i = 0; i < pattern->cycles; i++)
+    for (size_t i = 0; i < patternLen; i++)
     {
-      gpio_set_level(ELECTRA_ESP_LED, ledOn ? 1 : 0);
-      vTaskDelay(pattern->pattern[i] / portTICK_RATE_MS);
       ledOn = !ledOn;
+      gpio_set_level(ELECTRA_ESP_LED, ledOn ? 1 : 0);
+      if (pattern[i] > 0)
+      {
+        vTaskDelay(pattern[i] / portTICK_RATE_MS);
+      }
     }
   }
 }

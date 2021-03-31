@@ -25,8 +25,7 @@ void WiFiAP::init()
 {
   mdns_start();
   wifi_init_softap();
-  blinkPattern_t pattern = PATTERN_BLINK_SLOW();
-  Led::setBlinkPattern(&pattern);
+  Led::blinkSlow();
 }
 
 void WiFiAP::startWebServer()

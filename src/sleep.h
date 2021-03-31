@@ -20,6 +20,7 @@ class Sleep {
     static void start(int delay = 1);
   private:
     static bool started;
+    static bool wasRinging;
     static int sleepDelay;
     static void sleepTask(void *arg);
     static void stopRingingTask(void *arg);
