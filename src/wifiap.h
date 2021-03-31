@@ -14,6 +14,7 @@
 #include <mdns.h>
 
 #include "settings.h"
+#include "led.h"
 
 #define ELECTRA_ESP_WIFI_CONFIG_SSID "ELECTRA32"
 #define ELECTRA_ESP_WIFI_CONFIG_PASS "87654321"

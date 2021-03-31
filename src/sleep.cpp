@@ -7,22 +7,23 @@ int Sleep::sleepDelay = 1;
 
 void Sleep::init()
 {
-  switch (esp_sleep_get_wakeup_cause()) {
-    case ESP_SLEEP_WAKEUP_EXT0:
-    case ESP_SLEEP_WAKEUP_EXT1:
-      ESP_LOGI(TAG, "Wakeup: EXT");
-      break;
-    case ESP_SLEEP_WAKEUP_TIMER:
-      ESP_LOGI(TAG, "Wakeup: timer");
-      break;
-    case ESP_SLEEP_WAKEUP_UNDEFINED:
-      ESP_LOGI(TAG, "Wakeup: undefined");
-      break;
-    case ESP_SLEEP_WAKEUP_ALL:
-      ESP_LOGI(TAG, "Wakeup: all");
-      break;
-    default:
-      ESP_LOGI(TAG, "Wakeup: default");
+  switch (esp_sleep_get_wakeup_cause())
+  {
+  case ESP_SLEEP_WAKEUP_EXT0:
+  case ESP_SLEEP_WAKEUP_EXT1:
+    ESP_LOGI(TAG, "Wakeup: EXT");
+    break;
+  case ESP_SLEEP_WAKEUP_TIMER:
+    ESP_LOGI(TAG, "Wakeup: timer");
+    break;
+  case ESP_SLEEP_WAKEUP_UNDEFINED:
+    ESP_LOGI(TAG, "Wakeup: undefined");
+    break;
+  case ESP_SLEEP_WAKEUP_ALL:
+    ESP_LOGI(TAG, "Wakeup: all");
+    break;
+  default:
+    ESP_LOGI(TAG, "Wakeup: default");
   }
 
   esp_sleep_enable_ext1_wakeup((1ULL << ESP_WAKEUP), ESP_EXT1_WAKEUP_ANY_HIGH);
@@ -36,6 +37,12 @@ void Sleep::init()
   io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
   io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
   gpio_config(&io_conf);
+
+  if (gpio_get_level(ESP_WAKEUP) == 1)
+  {
+    blinkPattern_t pattern = PATTERN_BLINK_FAST();
+    Led::setBlinkPattern(&pattern);
+  }
 }
 
 void Sleep::start(int delay)
@@ -55,6 +62,8 @@ void Sleep::sleepTask(void *arg)
   {
     if (gpio_get_level(ESP_WAKEUP) == 0)
     {
+      blinkPattern_t pattern = PATTERN_BLINK_OFF();
+      Led::setBlinkPattern(&pattern);
       // 1 second of LOW enters deep sleep
       vTaskDelay(sleepDelay * 1000 / portTICK_RATE_MS);
       if (gpio_get_level(ESP_WAKEUP) == 0)

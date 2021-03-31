@@ -25,6 +25,8 @@ void WiFiAP::init()
 {
   mdns_start();
   wifi_init_softap();
+  blinkPattern_t pattern = PATTERN_BLINK_SLOW();
+  Led::setBlinkPattern(&pattern);
 }
 
 void WiFiAP::startWebServer()
@@ -204,7 +206,8 @@ void WiFiAP::mdns_start()
   ESP_ERROR_CHECK(mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0));
 }
 
-void WiFiAP::rebootTask(void *arg) {
+void WiFiAP::rebootTask(void *arg)
+{
   vTaskDelay(1000 / portTICK_RATE_MS);
   esp_restart();
   vTaskDelete(NULL);

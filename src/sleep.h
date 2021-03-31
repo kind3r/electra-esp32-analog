@@ -7,7 +7,9 @@
 #include <driver/gpio.h>
 #include <esp_sleep.h>
 #include <esp_log.h>
+
 #include "ha.h"
+#include "led.h"
 
 #define ESP_WAKEUP GPIO_NUM_14
 #define ESP_WAKEUP_INTERVAL 3 * 60 * 60 // every 3h to report battery
