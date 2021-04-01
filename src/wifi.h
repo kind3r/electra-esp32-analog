@@ -7,6 +7,7 @@
 #include <esp_event.h>
 #include <freertos/event_groups.h>
 #include "settings.h"
+#include "ota.h"
 
 /* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP

@@ -1,8 +1,6 @@
 #ifndef ELECTRA_ESP_HA_H
 #define ELECTRA_ESP_HA_H
 
-#define ELECTRA_ESP_HA_VERSION "3"
-
 #define ELECTRA_ESP_HA_BUFFER_SIZE 4096
 
 #include <string>
@@ -15,6 +13,7 @@
 #include "intercom.h"
 #include "sleep.h"
 #include "battery.h"
+#include "ota.h"
 
 class HA
 {

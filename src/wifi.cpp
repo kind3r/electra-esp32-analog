@@ -15,6 +15,7 @@ esp_err_t WiFi::init()
 
   if (wifi_init_sta(Settings::getSsid(), Settings::getPass()))
   {
+    Ota::init();
     return ESP_OK;
   }
   else

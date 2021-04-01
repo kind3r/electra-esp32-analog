@@ -31,7 +31,7 @@ esp_err_t HA::init()
   buffer = new uint8_t[ELECTRA_ESP_HA_BUFFER_SIZE];
 
   currentVersion = Settings::getMqttUrl();
-  currentVersion += ELECTRA_ESP_HA_VERSION;
+  currentVersion += Ota::getCurrentVersion();
 
   configTopic = "homeassistant/lock/";
   configTopic += Settings::getEntity();
@@ -232,7 +232,7 @@ void HA::createDevice(cJSON *&device)
   cJSON_AddItemToObject(device, "manufacturer", manufacturer);
   cJSON *model = cJSON_CreateString("ESP32");
   cJSON_AddItemToObject(device, "model", model);
-  cJSON *sw_version = cJSON_CreateString("0.0.1");
+  cJSON *sw_version = cJSON_CreateString(Ota::getCurrentVersion());
   cJSON_AddItemToObject(device, "sw_version", sw_version);
   cJSON *identifiers = cJSON_CreateArray();
   cJSON_AddItemToObject(device, "identifiers", identifiers);
