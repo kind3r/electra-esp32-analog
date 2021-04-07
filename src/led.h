@@ -16,6 +16,7 @@ public:
   static void blinkOff();
   static void blinkSlow();
   static void blinkFast();
+  static void blinkOn();
   static void setBlinkPattern(uint16_t *pattern, size_t patternLen);
 private:
   static SemaphoreHandle_t blinkSemaphore;

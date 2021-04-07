@@ -5,6 +5,7 @@ static const char *TAG = "Led";
 uint16_t blinkPatternOff[2] = {0, 100};
 uint16_t blinkPatternSlow[2] = {200, 1000};
 uint16_t blinkPatternFast[2] = {100, 100};
+uint16_t blinkPatternOn[2] = {100, 0};
 
 SemaphoreHandle_t Led::blinkSemaphore = NULL;
 bool Led::blinkChanged;
@@ -44,6 +45,11 @@ void Led::blinkSlow()
 void Led::blinkFast()
 {
   setBlinkPattern(blinkPatternFast, 2);
+}
+
+void Led::blinkOn()
+{
+  setBlinkPattern(blinkPatternOn, 2);
 }
 
 void Led::setBlinkPattern(uint16_t *pattern, size_t patternLen)

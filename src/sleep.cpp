@@ -42,7 +42,7 @@ void Sleep::sleepTask(void *arg)
       }
       // 1 second of LOW enters deep sleep
       vTaskDelay(sleepDelay * 1000 / portTICK_RATE_MS);
-      if (!Intercom::isRinging())
+      if (!Intercom::isRinging() && !Ota::getIsOTA())
       {
         xTaskCreate(stopRingingTask, "stop_ringing", 2048, NULL, 10, NULL);
         vTaskDelete(NULL);

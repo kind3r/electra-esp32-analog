@@ -11,6 +11,7 @@
 #include "sleep.h"
 #include "battery.h"
 #include "led.h"
+#include "ota.h"
 
 extern "C"
 {
@@ -24,7 +25,7 @@ void app_main()
   ESP_ERROR_CHECK(esp_event_loop_create_default());
 
   Led::init();
-  
+
   Battery::init();
 
   Intercom::init();
@@ -38,15 +39,19 @@ void app_main()
     WiFiAP::init();
     Sleep::start(300); // sleep after 5 minutes
   }
-  else if (HA::init() != ESP_OK)
+  else
   {
-    ESP_LOGE("main", "Error during HA init");
-    Sleep::start();
-  }
-  else if (WiFi::init() != ESP_OK)
-  {
-    ESP_LOGE("main", "Error during WiFi init");
-    // Sleep::start();
-    esp_restart();
+    Ota::init();
+    if (HA::init() != ESP_OK)
+    {
+      ESP_LOGE("main", "Error during HA init");
+      Sleep::start();
+    }
+    else if (WiFi::init() != ESP_OK)
+    {
+      ESP_LOGE("main", "Error during WiFi init");
+      // Sleep::start();
+      esp_restart();
+    }
   }
 }

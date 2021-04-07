@@ -19,7 +19,8 @@ const char *nvs_errors[] = {"OTHER", "NOT_INITIALIZED", "NOT_FOUND", "TYPE_MISMA
 
 esp_err_t Settings::init()
 {
-  if (esp_reset_reason() == ESP_RST_POWERON) {
+  if (esp_reset_reason() == ESP_RST_POWERON)
+  {
     forceSetupMode = false;
   }
 
@@ -34,17 +35,19 @@ esp_err_t Settings::init()
       ESP_LOGE(TAG, "nvs_open failed: %s", nvs_error(ret));
       return ret;
     }
-    if (!isKey("haVersion")) {
+    if (!isKey("haVersion"))
+    {
       haVersion = new char[8];
       memcpy(haVersion, "default", 7);
       haVersion[7] = '\0';
-    } else {
+    }
+    else
+    {
       size_t verLen = getBytesLength("haVersion") + 1;
       haVersion = new char[verLen];
       getBytes("haVersion", haVersion, verLen - 1);
       haVersion[verLen - 1] = '\0';
     }
-    
     // init SPIFFS
     ret = initSPIFFS();
     if (ret != ESP_OK)
@@ -70,11 +73,13 @@ esp_err_t Settings::init()
   io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
   gpio_config(&io_conf);
 
-  if (gpio_get_level(ELECTRA_ESP_CONFIG) == 0) {
+  if (gpio_get_level(ELECTRA_ESP_CONFIG) == 0)
+  {
     forceSetupMode = true;
   }
 
-  if (forceSetupMode) {
+  if (forceSetupMode)
+  {
     forceSetupMode = false;
     ESP_LOGI(TAG, "Forcing setup mode");
     return ESP_FAIL;
@@ -88,7 +93,7 @@ char *Settings::getHaVersion()
   return haVersion;
 }
 
-void Settings::setHaVersion(const char *newVersion) 
+void Settings::setHaVersion(const char *newVersion)
 {
   size_t verLen = strlen(newVersion) + 1;
   putBytes("haVersion", newVersion, verLen - 1);
@@ -363,7 +368,8 @@ size_t Settings::getBytes(const char *key, void *buf, size_t maxLen)
   return len;
 }
 
-size_t Settings::getConfigFile(uint8_t *buffer) {
+size_t Settings::getConfigFile(uint8_t *buffer)
+{
   FILE *fd = nullptr;
   fd = fopen(ELECTRA_ESP_SETTINGS_FILE, "r");
   if (!fd)
@@ -373,20 +379,25 @@ size_t Settings::getConfigFile(uint8_t *buffer) {
     memcpy(buffer, ELECTRA_ESP_DEFAULT_CONFIG, fileLen);
     buffer[fileLen] = '\0';
     return fileLen;
-  } else {
+  }
+  else
+  {
     size_t fileLen = fread(buffer, 1, ELECTRA_ESP_CONFIG_BUFFER_SIZE, fd);
     fclose(fd);
     return fileLen;
   }
 }
 
-esp_err_t Settings::putConfigFile(uint8_t *buffer, size_t bufferLen) {
+esp_err_t Settings::putConfigFile(uint8_t *buffer, size_t bufferLen)
+{
   FILE *fd = nullptr;
   fd = fopen(ELECTRA_ESP_SETTINGS_FILE, "w");
   if (!fd)
   {
     return ESP_FAIL;
-  } else {
+  }
+  else
+  {
     fwrite(buffer, 1, bufferLen, fd);
     fclose(fd);
     return ESP_OK;
