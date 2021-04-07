@@ -56,6 +56,11 @@ Schematic, PCB and BOM are available [here](https://oshwlab.com/Gibonii/electra-
 > - First time configuration
 > - Testing
 
+## Resources of inspiration
+
+- [https://micro-flight.blogspot.com/2010/09/hack-interfon-electra.html](https://micro-flight.blogspot.com/2010/09/hack-interfon-electra.html)
+- [https://forum.arduino.cc/index.php?topic=659051.0](https://forum.arduino.cc/index.php?topic=659051.0)
+
 ## TODO
 
 Short term:

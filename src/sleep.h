@@ -7,6 +7,7 @@
 #include <driver/gpio.h>
 #include <esp_sleep.h>
 #include <esp_log.h>
+#include <esp_wifi.h>
 
 #include "ha.h"
 #include "led.h"

@@ -58,6 +58,7 @@ void Sleep::stopRingingTask(void *arg)
   // uint32_t delay = 1000 / portTICK_RATE_MS;
   // vTaskDelay(delay);
   ESP_LOGI(TAG, "Entering deep sleep");
+  esp_wifi_stop();
   esp_deep_sleep_start();
   vTaskDelete(NULL); // won't really matter
 }
