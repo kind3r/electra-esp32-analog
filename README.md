@@ -6,7 +6,7 @@ Feeling generous and want to support my work, here is [my PayPal link](https://p
 
 ## Intro
 
-After some research and experimentation it was **not possible to power the ESP32 module from the intercom power line** as the power is not always available and the ESP32 WiFi and boot power spikes confuse the Electra Call Distributor. So the next logical step was to use a battery to power. I opted for a **LiFePO4 18650** battery to optimise power usage since it's nominal voltage is 3.2V and it's max charge is 3.6V, thus it does not require power regulation which saves quite some energy. Combined with the fact that the device is mostly in deep sleep mode, this should give a **very long battery life** (few years - still need to make exact measuremets). 
+After some research and experimentation it was **not possible to power the ESP32 module from the intercom power line** as the power is not always available and the ESP32 WiFi and boot power spikes confuse the Electra Call Distributor. So the next logical step was to use a battery to power. At first I opted for a **LiFePO4 18650** battery to optimise power usage since it's nominal voltage is 3.2V and it's max charge is 3.6V, thus it does not require power regulation which saves quite some energy. Combined with the fact that the device is mostly in deep sleep mode, this should give a **very long battery life** (few years - still need to make exact measuremets). Now I am testing 2 AAA batteries and it seems to work fine and they also fit in the intercom case, event better than the 18650.
 
 ## Features
 
@@ -47,7 +47,7 @@ Schematic, PCB and BOM are available [here](https://oshwlab.com/Gibonii/electra-
 > TODO: 
 > - Connector for uploading
 > - How to build and make configuration adjustments (battery reporting interval, configuration mode sleep time)
-> - PlatformIO + upload SPIFFS & config file
+> - PlatformIO + upload SPIFFS (for web config) & config file (optional)
 
 ### Configuration
 
@@ -70,6 +70,5 @@ Short term:
 - Test power usage
 
 Long term:
-- Look into using 2xAAA batteries for power, if they can fit in the intercom case
 - Look into coin cell powering using CR2450 + supercap
 - Look into using BLE for communication (downside is this would require a gateway)
