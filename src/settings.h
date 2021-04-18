@@ -57,7 +57,6 @@ private:
   static char *mqttPass;
   static char *entity;
 
-  static esp_err_t initSPIFFS();
   static esp_err_t readConfig(uint8_t *buffer, size_t bufferLen);
   static esp_err_t getConfigVar(cJSON *root, const char *name, char *&var);
   static bool isKey(const char* key);

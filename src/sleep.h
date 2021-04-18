@@ -13,6 +13,7 @@
 #include "led.h"
 #include "intercom.h"
 #include "ota.h"
+#include "log.h"
 
 #define ESP_WAKEUP_INTERVAL 3 * 60 * 60 // every 3h to report battery
 #define ESP_SLEEP_DELAY 1

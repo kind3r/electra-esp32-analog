@@ -12,6 +12,8 @@
 #include "battery.h"
 #include "led.h"
 #include "ota.h"
+#include "spiffs.h"
+#include "log.h"
 
 extern "C"
 {
@@ -24,6 +26,10 @@ void app_main()
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
 
+  Spiffs::init();
+  
+  LOG::init();
+  
   Led::init();
 
   Battery::init();

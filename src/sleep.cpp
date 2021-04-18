@@ -44,7 +44,7 @@ void Sleep::sleepTask(void *arg)
       vTaskDelay(sleepDelay * 1000 / portTICK_RATE_MS);
       if (!Intercom::isRinging() && !Ota::getIsOTA())
       {
-        xTaskCreate(stopRingingTask, "stop_ringing", 2048, NULL, 10, NULL);
+        xTaskCreate(stopRingingTask, "stop_ringing", 3096, NULL, 10, NULL);
         vTaskDelete(NULL);
       }
     }
@@ -59,6 +59,7 @@ void Sleep::stopRingingTask(void *arg)
   // vTaskDelay(delay);
   ESP_LOGI(TAG, "Entering deep sleep");
   esp_wifi_stop();
+  LOG::close();
   esp_deep_sleep_start();
   vTaskDelete(NULL); // won't really matter
 }

@@ -19,7 +19,18 @@ httpd_uri_t WiFiAP::configSet = {
     .method = HTTP_POST,
     .handler = handleConfigSet,
     .user_ctx = NULL};
+httpd_uri_t WiFiAP::logsGet = {
+    .uri = "/logs",
+    .method = HTTP_GET,
+    .handler = handleLogsGet,
+    .user_ctx = NULL};
+httpd_uri_t WiFiAP::logGet = {
+    .uri = "/log/*",
+    .method = HTTP_GET,
+    .handler = handleLogGet,
+    .user_ctx = NULL};
 uint8_t *WiFiAP::buffer = new uint8_t[ELECTRA_ESP_CONFIG_BUFFER_SIZE];
+logFiles_t WiFiAP::logs;
 
 void WiFiAP::init()
 {
@@ -35,11 +46,14 @@ void WiFiAP::startWebServer()
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_open_sockets = 3;
     config.uri_match_fn = httpd_uri_match_wildcard;
+    // config.stack_size = 8192;
 
     httpd_start(&server, &config);
     httpd_register_uri_handler(server, &home);
     httpd_register_uri_handler(server, &configGet);
     httpd_register_uri_handler(server, &configSet);
+    httpd_register_uri_handler(server, &logsGet);
+    httpd_register_uri_handler(server, &logGet);
   }
 }
 
@@ -139,6 +153,9 @@ esp_err_t WiFiAP::handleHome(httpd_req_t *req)
     /* Keep looping till the whole file is sent */
   } while (chunksize != 0);
 
+  /* Send empty chunk to signal HTTP response completion */
+  httpd_resp_sendstr_chunk(req, NULL);
+
   fclose(fd);
 
   return ESP_OK;
@@ -148,7 +165,8 @@ esp_err_t WiFiAP::handleConfigGet(httpd_req_t *req)
 {
   httpd_resp_set_type(req, HTTPD_TYPE_JSON);
 
-  Settings::getConfigFile(buffer);
+  size_t len = Settings::getConfigFile(buffer);
+  buffer[len] = '\0';
 
   httpd_resp_sendstr(req, (char *)buffer);
 
@@ -190,6 +208,85 @@ esp_err_t WiFiAP::handleConfigSet(httpd_req_t *req)
   {
     httpd_resp_sendstr(req, "FAIL");
   }
+
+  return ESP_OK;
+}
+
+esp_err_t WiFiAP::handleLogsGet(httpd_req_t *req)
+{
+  httpd_resp_set_type(req, HTTPD_TYPE_JSON);
+
+  uint8_t found = LOG::list(logs);
+
+  // cJSON *response;
+  // response = cJSON_CreateObject();
+
+  cJSON *logFiles = cJSON_CreateArray();
+  for(uint8_t i = 0; i < found; i++) {
+    cJSON *logFile = cJSON_CreateString(logs[i].c_str());
+    cJSON_AddItemToArray(logFiles, logFile);
+  }
+
+  cJSON_PrintPreallocated(logFiles, (char *)buffer, ELECTRA_ESP_CONFIG_BUFFER_SIZE, false);
+
+  httpd_resp_sendstr(req, (char *)buffer);
+
+  return ESP_OK;
+}
+
+esp_err_t WiFiAP::handleLogGet(httpd_req_t *req)
+{
+  httpd_resp_set_type(req, HTTPD_TYPE_TEXT);
+
+  // get the log file name
+  char fileName[strlen(req->uri) - 5 + 1];
+  memcpy(fileName, req->uri + 5, strlen(req->uri) - 5 + 1);
+  std::string filePath = "/spiffs/";
+  filePath += fileName;
+
+  FILE *fd = nullptr;
+  fd = fopen(filePath.c_str(), "r");
+  if (!fd)
+  {
+    ESP_LOGE(TAG, "Failed to read %s from SPIFFS", filePath.c_str());
+    /* Respond with 500 Internal Server Error */
+    httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
+    return ESP_FAIL;
+  }
+
+  // set content type and encoding
+  httpd_resp_set_type(req, "text/html");
+  // httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+
+  /* Retrieve the pointer to scratch buffer for temporary storage */
+  size_t chunksize;
+  do
+  {
+    /* Read file in chunks into the scratch buffer */
+    chunksize = fread(buffer, 1, ELECTRA_ESP_CONFIG_BUFFER_SIZE, fd);
+
+    if (chunksize > 0)
+    {
+      /* Send the buffer contents as HTTP response chunk */
+      if (httpd_resp_send_chunk(req, (char *)buffer, chunksize) != ESP_OK)
+      {
+        fclose(fd);
+        ESP_LOGE(TAG, "File sending failed!");
+        /* Abort sending file */
+        httpd_resp_sendstr_chunk(req, NULL);
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
+        return ESP_FAIL;
+      }
+    }
+
+    /* Keep looping till the whole file is sent */
+  } while (chunksize != 0);
+
+  /* Send empty chunk to signal HTTP response completion */
+  httpd_resp_sendstr_chunk(req, NULL);
+
+  fclose(fd);
 
   return ESP_OK;
 }

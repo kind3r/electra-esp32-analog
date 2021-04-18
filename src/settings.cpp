@@ -48,12 +48,6 @@ esp_err_t Settings::init()
       getBytes("haVersion", haVersion, verLen - 1);
       haVersion[verLen - 1] = '\0';
     }
-    // init SPIFFS
-    ret = initSPIFFS();
-    if (ret != ESP_OK)
-    {
-      return ret;
-    }
     // read and parse config file
     uint8_t configBuffer[ELECTRA_ESP_CONFIG_BUFFER_SIZE] = {0};
     ret = readConfig(configBuffer, ELECTRA_ESP_CONFIG_BUFFER_SIZE);
@@ -130,52 +124,6 @@ char *Settings::getMqttPass()
 char *Settings::getEntity()
 {
   return entity;
-}
-
-esp_err_t Settings::initSPIFFS()
-{
-  ESP_LOGV(TAG, "Mounting SPIFFS");
-
-  esp_vfs_spiffs_conf_t conf = {
-      .base_path = "/spiffs",
-      .partition_label = NULL,
-      .max_files = 5, // This decides the maximum number of files that can be created on the storage
-      .format_if_mount_failed = true};
-
-  esp_err_t ret = esp_vfs_spiffs_register(&conf);
-
-  if (ret != ESP_OK)
-  {
-    if (ret == ESP_FAIL)
-    {
-      ESP_LOGE(TAG, "Failed to mount or format filesystem");
-    }
-    else if (ret == ESP_ERR_NOT_FOUND)
-    {
-      ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-    }
-    else
-    {
-      ESP_LOGE(TAG, "Failed to initialize SPIFFS [%s]", esp_err_to_name(ret));
-    }
-    return ret;
-  }
-
-  ESP_LOGV(TAG, "SPIFFS mounted");
-
-#if CONFIG_LOG_DEFAULT_LEVEL >= ESP_LOG_DEBUG
-  size_t total = 0, used = 0;
-  ret = esp_spiffs_info(NULL, &total, &used);
-  if (ret != ESP_OK)
-  {
-    ESP_LOGE(TAG, "Failed to get SPIFFS partition information [%s]", esp_err_to_name(ret));
-    return false;
-  }
-
-  ESP_LOGD(TAG, "Partition size: total: %d, used: %d", total, used);
-#endif
-
-  return ESP_OK;
 }
 
 esp_err_t Settings::readConfig(uint8_t *buffer, size_t bufferLen)
